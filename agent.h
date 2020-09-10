@@ -19,10 +19,7 @@ public slots:
                                         const QString &iconName,
                                         const QMap<QString, QString> &details,
                                         const QString &cookie,
-                                        //const QList<QPair<QString, QList<QMap<QString, QVariant>>>> &identities
-                                        //const QMap<QString, QVariantMap> &identities
                                         const QList<QPair<QString, QVariantMap>> &identities
-                                        //const QVariantMap &identities
                                         )
     {
         Q_UNUSED(identities);
