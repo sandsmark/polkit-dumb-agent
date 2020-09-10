@@ -4,6 +4,7 @@
 #include <QCoreApplication>
 #include <QTimer>
 #include <QtDBus>
+#include <QFile>
 
 #include "agent.h"
 
@@ -11,6 +12,7 @@ int main(int argc, char **argv)
 {
     QCoreApplication::setSetuidAllowed(true);
     QCoreApplication app(argc, argv);
+    qDebug() << app.libraryPaths();
 
     // Details
     qRegisterMetaType<QMap<QString, QString>>("QMap<QString, QString>");
@@ -30,6 +32,7 @@ int main(int argc, char **argv)
                 "\teval `dbus-launch --auto-syntax`\n");
         return 1;
     }
+    qDebug() << QFile::exists(LIBEXEC_DIR "polkit-dumb-notifier-responder");
 
 
     Auther auther;
