@@ -22,7 +22,6 @@ public slots:
                                         const QList<QPair<QString, QVariantMap>> &identities
                                         )
     {
-        Q_UNUSED(identities);
         qDebug() << actionId << message << iconName << details << cookie;
 
         QDBusMessage fuckoff = QDBusMessage::createMethodCall(

@@ -12,21 +12,17 @@ int main(int argc, char **argv)
     QCoreApplication::setSetuidAllowed(true);
     QCoreApplication app(argc, argv);
 
-    qRegisterMetaType<QPair<QString,QVariantMap>>("QPair<QString,QVariantMap>");
-    qDBusRegisterMetaType<QPair<QString,QVariantMap>>();
+    // Details
     qRegisterMetaType<QMap<QString, QString>>("QMap<QString, QString>");
     qDBusRegisterMetaType<QMap<QString, QString>>();
 
-    qRegisterMetaType<QMap<QString, QVariantMap>>("QMap<QString, QVariantMap>");
-    qDBusRegisterMetaType<QMap<QString, QVariantMap>>();
-
-    qRegisterMetaType<QList<QPair<QString, QVariantMap>>>("QList<QPair<QString, QVariantMap>>>");
-    qDBusRegisterMetaType<QList<QPair<QString, QVariantMap>>>();
+    // Identity
     qRegisterMetaType<QPair<QString, QVariantMap>>("QPair<QString, QVariantMap>>");
     qDBusRegisterMetaType<QPair<QString, QVariantMap>>();
 
-    qRegisterMetaType<QList<QPair<QString, QList<QMap<QString, QVariant>>>>>("QList<QPair<QString, QList<QMap<QString, QVariant>>>>");
-    qDBusRegisterMetaType<QList<QPair<QString, QList<QMap<QString, QVariant>>>>>();
+    // Identity list
+    qRegisterMetaType<QList<QPair<QString, QVariantMap>>>("QList<QPair<QString, QVariantMap>>>");
+    qDBusRegisterMetaType<QList<QPair<QString, QVariantMap>>>();
 
     if (!QDBusConnection::systemBus().isConnected()) {
         fprintf(stderr, "Cannot connect to the D-Bus session bus.\n"
@@ -41,21 +37,26 @@ int main(int argc, char **argv)
         qWarning() << "Failed to register auther";
         return 1;
     }
+    QString sessionId = qgetenv("XDG_SESSION_ID");
+    bool isInt;
+    sessionId.toInt(&isInt);
+
+    if (!isInt) {
+        qDebug() << "XDG_SESSION_ID " << sessionId << "is not a valid integer, defaulting to 1";
+        sessionId = "1";
+    }
 
     QDBusMessage regMessage = QDBusMessage::createMethodCall(
             "org.freedesktop.PolicyKit1",
-                "/org/freedesktop/PolicyKit1/Authority",
-                "org.freedesktop.PolicyKit1.Authority",
-                "RegisterAuthenticationAgent"
-            );
-    QVariantMap polkitshit1;
-    polkitshit1["session-id"] = "1";
-    QPair<QString, QVariantMap> polkitshit2("unix-session", polkitshit1);
-    QVariantList polkitshitargs;
-    polkitshitargs.append(QVariant::fromValue(polkitshit2));
-    polkitshitargs.append("en_US.UTF-8");
-    polkitshitargs.append("/com/iskrembilen/polkitAuthAgent");
-    regMessage.setArguments( polkitshitargs);
+            "/org/freedesktop/PolicyKit1/Authority",
+            "org.freedesktop.PolicyKit1.Authority",
+            "RegisterAuthenticationAgent"
+        );
+    regMessage.setArguments({
+            QVariant::fromValue(QPair<QString, QVariantMap>("unix-session", {{"session-id", sessionId}})),
+            "en_US.UTF-8",
+            "/com/iskrembilen/polkitAuthAgent"
+        });
     QDBusConnection::systemBus().send(regMessage);
 
     app.exec();
