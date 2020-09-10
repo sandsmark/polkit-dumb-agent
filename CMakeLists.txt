@@ -35,5 +35,4 @@ target_link_libraries(polkit-dumb-notifier-responder PRIVATE PkgConfig::systemd)
 install(TARGETS polkit-dumb-notifier DESTINATION bin)
 install(TARGETS polkit-dumb-notifier-responder
     DESTINATION "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/polkit-dumb-agent/"
-    PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE SETUID
     )

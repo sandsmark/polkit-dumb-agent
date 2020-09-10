@@ -31,16 +31,10 @@ int main(int argc, char **argv)
         return 1;
     }
     QFileInfo responderInfo(LIBEXEC_DIR "polkit-dumb-notifier-responder");
-    // TODO: check for suid bit
     if (!responderInfo.exists()) {
         qWarning() << "responder doesn't exist" << responderInfo.filePath();
         return 1;
     }
-    if (responderInfo.ownerId() != 0) {
-        qWarning() << "responder not owned by root" << responderInfo.filePath();
-        return 1;
-    }
-
     if (!responderInfo.isExecutable()) {
         qWarning() << "responder not executable" << responderInfo.filePath();
         return 1;
