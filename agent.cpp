@@ -1,17 +1,15 @@
+#include "agent.h"
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <QCoreApplication>
-#include <QTimer>
-#include <QtDBus>
-#include <QFile>
+#include <QApplication>
+#include <QDBusMetaType>
+#include <QFileInfo>
 
-#include "agent.h"
 
 int main(int argc, char **argv)
 {
-    QCoreApplication::setSetuidAllowed(true);
-    QCoreApplication app(argc, argv);
+    QApplication app(argc, argv);
     qDebug() << app.libraryPaths();
 
     // Details
@@ -32,12 +30,27 @@ int main(int argc, char **argv)
                 "\teval `dbus-launch --auto-syntax`\n");
         return 1;
     }
-    qDebug() << QFile::exists(LIBEXEC_DIR "polkit-dumb-notifier-responder");
+    QFileInfo responderInfo(LIBEXEC_DIR "polkit-dumb-notifier-responder");
+    // TODO: check for suid bit
+    if (!responderInfo.exists()) {
+        qWarning() << "responder doesn't exist" << responderInfo.filePath();
+        return 1;
+    }
+    if (responderInfo.ownerId() != 0) {
+        qWarning() << "responder not owned by root" << responderInfo.filePath();
+        return 1;
+    }
+
+    if (!responderInfo.isExecutable()) {
+        qWarning() << "responder not executable" << responderInfo.filePath();
+        return 1;
+    }
 
 
-    Auther auther;
-    if (!QDBusConnection::systemBus().registerObject("/com/iskrembilen/polkitAuthAgent", &auther, QDBusConnection::ExportAllSlots)) {
-        qWarning() << "Failed to register auther";
+    Agent agent;
+    agent.responderPath = responderInfo.filePath();
+    if (!QDBusConnection::systemBus().registerObject("/com/iskrembilen/polkitAuthAgent", &agent, QDBusConnection::ExportAllSlots)) {
+        qWarning() << "Failed to register agent";
         return 1;
     }
     QString sessionId = qgetenv("XDG_SESSION_ID");
@@ -62,6 +75,5 @@ int main(int argc, char **argv)
         });
     QDBusConnection::systemBus().send(regMessage);
 
-    app.exec();
-    return 0;
+    return app.exec();
 }
