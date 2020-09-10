@@ -4,7 +4,6 @@ project(polkit-dumb-notifier LANGUAGES CXX C)
 
 find_package(Qt5 COMPONENTS Widgets DBus REQUIRED)
 find_package(KF5Su REQUIRED)
-find_package(KF5WidgetsAddons REQUIRED)
 
 # systemd for responder dbus
 find_package(PkgConfig REQUIRED)
@@ -26,7 +25,6 @@ target_link_libraries(polkit-dumb-notifier PRIVATE
     Qt5::DBus
     Qt5::Widgets
     KF5::Su
-    KF5::WidgetsAddons
     )
 
 add_executable(polkit-dumb-notifier-responder sendreply.c)

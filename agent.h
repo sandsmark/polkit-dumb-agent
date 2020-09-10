@@ -3,7 +3,7 @@
 #include <QDebug>
 #include <QDBusMessage>
 #include <QDBusConnection>
-#include <KPasswordDialog>
+#include <QInputDialog>
 #include <QPointer>
 #include <QProcess>
 #include <QRandomGenerator>
@@ -29,15 +29,11 @@ public slots:
                                         )
     {
         qDebug() << actionId << message << iconName << details << cookie;
-        QPointer<KPasswordDialog> dlg = new KPasswordDialog;
-        dlg->setPrompt("Please enter the root password");
-        if (!dlg->exec()) {
-            qWarning() << "Dialog cancelled";
-            dlg->deleteLater();
-            return;
-        }
-        if (!dlg) {
-            qWarning() << "Dialog deleted during getting password";
+
+        bool ok;
+        QString password = QInputDialog::getText(nullptr, "Enter the root password", message + "\n" + actionId, QLineEdit::Password, QString(), &ok);
+        if (!ok) {
+            qWarning() << "user dismissed";
             return;
         }
 
@@ -46,15 +42,12 @@ public slots:
                 responderPath,
                 safeCookie,
                 QString::number(getuid()),
-                });
+            });
 
         KDESu::SuProcess process;
         process.setErase(true);
         process.setCommand(args.join(' ').toLocal8Bit());
         process.setUser("root");
-
-        QString password = dlg->password();
-        dlg->deleteLater();
         process.exec(password.toLocal8Bit());
 
         // clear the memory
