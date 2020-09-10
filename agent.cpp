@@ -1,9 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <QtCore/QCoreApplication>
-#include <QtCore/QTimer>
-#include <QtDBus/QtDBus>
+#include <QCoreApplication>
+#include <QTimer>
+#include <QtDBus>
 
 #include "agent.h"
 
