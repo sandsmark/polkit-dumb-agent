@@ -5,8 +5,8 @@
 
 int main(int argc, char *argv[])
 {
-    if (argc < 3) {
-        puts("missin args ('cookie uid-authed'");
+    if (argc != 3) {
+        puts("Invalid args passed, need cookie and authed ID");
         return 1;
     }
 
@@ -20,6 +20,7 @@ int main(int argc, char *argv[])
         fprintf(stderr, "Failed to connect to system bus: %s", strerror(-ret));
         return 1;
     }
+    printf("Responding, cookie: %s, authed uid: %d\n", argv[1], atoi(argv[2]));
 
     sd_bus_error error = SD_BUS_ERROR_NULL;
     sd_bus_message *dbusRet = NULL;
