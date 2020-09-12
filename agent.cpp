@@ -45,7 +45,7 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    QFileInfo responderInfo(LIBEXEC_DIR "polkit-dumb-notifier-responder");
+    QFileInfo responderInfo(LIBEXEC_DIR "polkit-dumb-agent-responder");
     if (!responderInfo.exists()) {
         qWarning() << "responder doesn't exist" << responderInfo.filePath();
         return 1;
