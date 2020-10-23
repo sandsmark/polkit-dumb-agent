@@ -16,28 +16,32 @@
 */
 
 #include <systemd/sd-bus.h>
+#include <systemd/sd-journal.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <errno.h>
 
 int main(int argc, char *argv[])
 {
     if (argc != 3) {
-        puts("Invalid args passed, need cookie and authed ID");
+        sd_journal_print(LOG_ERR, "Invalid args passed, need cookie and authed ID");
         return 1;
     }
 
     if (getuid()) {
-        puts("warning: This probably needs to run as root");
+        sd_journal_print(LOG_ERR, "warning: This needs to run as root");
+        return 1;
     }
 
     sd_bus *bus = NULL;
     int ret = sd_bus_open_system(&bus);
     if (ret < 0) {
-        fprintf(stderr, "Failed to connect to system bus: %s", strerror(-ret));
+        sd_journal_print(LOG_ERR, "Failed to connect to system bus: %s", strerror(-ret));
         return 1;
     }
-    printf("Responding, cookie: %s, authed uid: %d\n", argv[1], atoi(argv[2]));
+
+    sd_journal_print(LOG_NOTICE, "Responding, cookie: %s, authed uid: %d\n", argv[1], atoi(argv[2]));
 
     sd_bus_error error = SD_BUS_ERROR_NULL;
     sd_bus_message *dbusRet = NULL;
@@ -61,13 +65,13 @@ int main(int argc, char *argv[])
                     );
 
     if (ret < 0) {
-        fprintf(stderr, "Failed to issue method call: %s\n", error.message);
+        sd_journal_print(LOG_ERR, "Failed to issue method call: %s (%s)\n", error.message, strerror(errno));
     }
 
     sd_bus_error_free(&error);
     sd_bus_message_unref(dbusRet);
     sd_bus_unref(bus);
 
-    return 0;
+    return ret;
 }
 
