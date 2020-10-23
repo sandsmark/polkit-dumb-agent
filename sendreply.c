@@ -55,7 +55,7 @@ int main(int argc, char *argv[])
                     "us(sa{sv})",/* input signature */
 
                     // arguments
-                    getuid(),
+                    atoi(argv[2]), // UID of our parent, should always be the same as authed
                     argv[1], // cookie
                     "unix-user",
                     1, // number of elements in a(rray)
