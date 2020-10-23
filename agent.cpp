@@ -27,6 +27,7 @@
 int main(int argc, char **argv)
 {
     QApplication app(argc, argv);
+    app.setQuitOnLastWindowClosed(false);
 
     // Details
     qRegisterMetaType<QMap<QString, QString>>("QMap<QString, QString>");
