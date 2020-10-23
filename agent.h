@@ -45,28 +45,51 @@ public slots:
                                         const QList<QPair<QString, QVariantMap>> &identities
                                         )
     {
-        qDebug() << actionId << message << iconName << details << cookie;
+        qDebug() << actionId << message << iconName << details << cookie << identities;
 
-        bool ok;
-        QString password = QInputDialog::getText(nullptr, "Enter the root password", message + "\n" + actionId, QLineEdit::Password, QString(), &ok);
-        if (!ok) {
-            qWarning() << "user dismissed";
-            return;
-        }
 
         const QString safeCookie = QProcess::splitCommand(cookie).first(); // in case someone try to be funny
         QStringList args({ responderPath, safeCookie, QString::number(getuid()) });
-
-        KDESu::SuProcess process;
-        process.setErase(true);
-        process.setCommand(args.join(' ').toLocal8Bit());
-        process.setUser("root");
-        process.exec(password.toLocal8Bit());
-
-        // clear the memory
-        QRandomGenerator::system()->generate(password.begin(), password.end());
+        for (int num=0;
+                num<3 && !tryAuth(args.join(' ').toLocal8Bit(), message, actionId);
+                num++
+            ) {}
     }
 
 public:
     QString responderPath;
+
+private:
+    bool tryAuth(const QByteArray &command, const QString &message, const QString &actionId)
+    {
+        bool ok;
+        QString password = QInputDialog::getText(nullptr, "Enter the root password", message + "\n" + actionId, QLineEdit::Password, QString(), &ok);
+        if (!ok) {
+            qWarning() << "user dismissed";
+            return true;
+        }
+
+        KDESu::SuProcess process;
+        process.setErase(true);
+        process.setCommand(command);
+        process.setUser("root");
+        const int result = process.exec(password.toLocal8Bit());
+        switch(result) {
+        case KDESu::SuProcess::SuNotFound:
+            qWarning() << "su not found!";
+            break;
+        case KDESu::SuProcess::SuNotAllowed:
+            qWarning() << "su not allowed!";
+            break;
+        case KDESu::SuProcess::SuIncorrectPassword:
+            qWarning() << "Wrong password";
+            break;
+        default:
+            qDebug() << "su finished" << command << result;
+        }
+
+        // clear the memory
+        QRandomGenerator::system()->generate(password.begin(), password.end());
+        return result != KDESu::SuProcess::SuIncorrectPassword;
+    }
 };
