@@ -18,17 +18,11 @@
 #pragma once
 
 #include <QDebug>
-#include <QDBusMessage>
-#include <QDBusConnection>
 #include <QInputDialog>
-#include <QPointer>
-#include <QProcess>
 #include <QRandomGenerator>
 #include <KDESu/SuProcess>
-
-extern "C" {
+#include <QProcess>
 #include <unistd.h>
-}
 
 class Agent : public QObject
 {
@@ -47,49 +41,32 @@ public slots:
     {
         qDebug() << actionId << message << iconName << details << cookie << identities;
 
-
         const QString safeCookie = QProcess::splitCommand(cookie).first(); // in case someone try to be funny
-        QStringList args({ responderPath, safeCookie, QString::number(getuid()) });
-        for (int num=0;
-                num<3 && !tryAuth(args.join(' ').toLocal8Bit(), message, actionId);
-                num++
-            ) {}
+        const QByteArray command = QStringList({ responderPath, safeCookie, QString::number(getuid()) }).join(' ').toLocal8Bit();
+
+        for (int num=0; num<3; num++) {
+            bool ok;
+            QString password = QInputDialog::getText(nullptr, "Enter the root password", message + "\n" + actionId, QLineEdit::Password, QString(), &ok);
+            if (!ok) {
+                return; // user aborted
+            }
+
+            KDESu::SuProcess process("root", command);
+            process.setErase(true);
+            const int result = process.exec(password.toLocal8Bit());
+            if (result < 0) {
+                qDebug() << "Failed to send reply" << strerror(errno);
+            }
+
+            // clear the memory
+            QRandomGenerator::system()->generate(password.begin(), password.end());
+            if (result != KDESu::SuProcess::SuIncorrectPassword) {
+                return;
+            }
+        }
+        return;
     }
 
 public:
     QString responderPath;
-
-private:
-    bool tryAuth(const QByteArray &command, const QString &message, const QString &actionId)
-    {
-        bool ok;
-        QString password = QInputDialog::getText(nullptr, "Enter the root password", message + "\n" + actionId, QLineEdit::Password, QString(), &ok);
-        if (!ok) {
-            qWarning() << "user dismissed";
-            return true;
-        }
-
-        KDESu::SuProcess process;
-        process.setErase(true);
-        process.setCommand(command);
-        process.setUser("root");
-        const int result = process.exec(password.toLocal8Bit());
-        switch(result) {
-        case KDESu::SuProcess::SuNotFound:
-            qWarning() << "su not found!";
-            break;
-        case KDESu::SuProcess::SuNotAllowed:
-            qWarning() << "su not allowed!";
-            break;
-        case KDESu::SuProcess::SuIncorrectPassword:
-            qWarning() << "Wrong password";
-            break;
-        default:
-            qDebug() << "su finished" << command << result;
-        }
-
-        // clear the memory
-        QRandomGenerator::system()->generate(password.begin(), password.end());
-        return result != KDESu::SuProcess::SuIncorrectPassword;
-    }
 };

@@ -16,11 +16,11 @@
 */
 
 #include "agent.h"
-#include <stdio.h>
-#include <stdlib.h>
 
 #include <QApplication>
 #include <QDBusMetaType>
+#include <QDBusConnection>
+#include <QDBusMessage>
 #include <QFileInfo>
 
 
@@ -47,15 +47,10 @@ int main(int argc, char **argv)
     }
 
     QFileInfo responderInfo(LIBEXEC_DIR "polkit-dumb-agent-responder");
-    if (!responderInfo.exists()) {
-        qWarning() << "responder doesn't exist" << responderInfo.filePath();
+    if (!responderInfo.exists() || !responderInfo.isExecutable()) {
+        qWarning() << "responder" << responderInfo.filePath() << "not installed properly, exists:" << responderInfo.exists() << "exec:" << responderInfo.isExecutable();
         return 1;
     }
-    if (!responderInfo.isExecutable()) {
-        qWarning() << "responder not executable" << responderInfo.filePath();
-        return 1;
-    }
-
 
     Agent agent;
     agent.responderPath = responderInfo.filePath();
