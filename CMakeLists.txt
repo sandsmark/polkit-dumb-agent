@@ -34,3 +34,5 @@ install(TARGETS polkit-dumb-agent DESTINATION bin)
 install(TARGETS polkit-dumb-agent-responder
     DESTINATION "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/polkit-dumb-agent/"
     )
+
+install(FILES polkit-dumb-agent.desktop DESTINATION /etc/xdg/autostart/)
