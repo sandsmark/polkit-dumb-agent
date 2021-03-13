@@ -41,7 +41,7 @@ public slots:
     {
         qDebug() << actionId << message << iconName << details << cookie << identities;
 
-        const QString safeCookie = QProcess::splitCommand(cookie).first(); // in case someone try to be funny
+        const QString safeCookie = cookie.split(" ").first(); // in case someone try to be funny
         const QByteArray command = QStringList({ responderPath, safeCookie, QString::number(getuid()) }).join(' ').toLocal8Bit();
 
         for (int num=0; num<3; num++) {
