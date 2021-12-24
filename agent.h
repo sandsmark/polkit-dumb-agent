@@ -22,6 +22,11 @@
 #include <QRandomGenerator>
 #include <KDESu/SuProcess>
 #include <QProcess>
+#include <QFile>
+#include <QString>
+#include <QTextStream>
+
+#include <sys/stat.h>
 #include <unistd.h>
 
 class Agent : public QObject
@@ -44,11 +49,50 @@ public slots:
         const QString safeCookie = QProcess::splitCommand(cookie).first(); // in case someone try to be funny
         const QByteArray command = QStringList({ responderPath, safeCookie, QString::number(getuid()) }).join(' ').toLocal8Bit();
 
-        for (int num=0; num<3; num++) {
-            bool ok;
-            QString password = QInputDialog::getText(nullptr, "Enter the root password", message + "\n" + actionId, QLineEdit::Password, QString(), &ok);
-            if (!ok) {
-                return; // user aborted
+        QString home = std::getenv("HOME");
+        QString config = home.append("/.config/polkit-dumb-agent/");
+        QString stylesheet = config.append("stylesheet.qss");
+
+        struct stat buffer;
+        QString stylesheetContent;
+        if (stat(stylesheet.toLatin1().constData(), &buffer) == 0)
+        {
+            QFile stylesheetFile(stylesheet);
+
+            if (stylesheetFile.open(QFile::ReadOnly | QFile::Text))
+            {
+                QTextStream in(&stylesheetFile);
+                stylesheetContent = in.readAll();
+            }
+            else
+            {
+                qDebug() << "Failed to open " << stylesheet;
+            }
+        }
+
+        for (int num=0; num<3; num++) 
+        {
+            QInputDialog inputDialog(nullptr);
+            inputDialog.setWindowTitle("Enter the root password");
+            inputDialog.setLabelText(message + "\n" + actionId);
+            inputDialog.setTextEchoMode(QLineEdit::EchoMode::Password);
+            inputDialog.setTextValue("");
+
+            if (!stylesheetContent.isEmpty())
+            {
+                inputDialog.setStyleSheet(stylesheetContent);
+            }
+
+            int dialogResult = inputDialog.exec();
+
+            QString password;    
+            if (dialogResult == QDialog::DialogCode::Accepted)
+            {
+                password = inputDialog.textValue();
+            }
+            else
+            {
+                return; //user aborted
             }
 
             KDESu::SuProcess process("root", command);

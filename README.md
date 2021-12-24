@@ -10,6 +10,15 @@ lines of code.
 it just uses kdesu to call a helper as root to send the reply, so all requests
 requires the user to enter the root password.
 
+Stylesheet Customization
+------------------------
+
+The Qt QInputDialog can be customized via a CSS stylesheet file. Place and name the file as follows:
+
+`$HOME/.config/polkit-dumb-agent/stylesheet.qss`
+
+See [Qt Stylesheet Syntax](https://doc.qt.io/qt-5/stylesheet-syntax.html) for reference.
+
 
 TODO
 ----
